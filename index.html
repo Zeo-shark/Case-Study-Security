@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<!-- Visualization & Content Choices:
+    - Report Info: GlobalTech's hybrid architecture, security vulnerabilities (IAM, Network, Data, App, Ops), Zero Trust principles (Verify Explicitly, Least Privilege, Assume Breach), and recommended Azure security controls. Goal: Enable architects to understand risks and mitigation strategies.
+    - Architecture Overview: Textual description with HTML/CSS visual cues for problematic connections (Goal: Inform, Method: Styled HTML list, Interaction: Static display, Justification: Avoid complex non-SVG diagrams, Library: Tailwind).
+    - Zero Trust Principles: Interactive tabs (Goal: Inform, Method: HTML/CSS tabs, Interaction: Click to switch tab, Justification: Concise presentation of core concepts, Library: JS for tab switching).
+    - Vulnerability Deep Dive (Problem Statement Matrix): Accordion for WAF pillars (Goal: Compare/Inform, Method: HTML/CSS accordion, Interaction: Click to expand/collapse, Justification: Structured exploration of detailed problems, Library: JS for accordion).
+    - Chart - Challenges per WAF Pillar: Vertical Bar Chart (Goal: Compare/Inform, Method: Chart.js Canvas, Interaction: Hover for tooltips, Justification: Quick visual summary of problem distribution, Library: Chart.js).
+    - Recommended Solutions (Solution Cheatsheet): Interactive, filterable HTML table (Goal: Organize/Inform, Method: HTML table + JS filters, Interaction: Dropdown filters, Justification: Easy lookup of specific solutions, Library: JS for filtering).
+    - Key Takeaways: Bulleted list (Goal: Inform, Method: Styled HTML list, Interaction: Static display, Justification: Clear summary of actions, Library: Tailwind).
+    - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+<html lang="en">
+<head>
+    <meta charset="UTF-UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Azure Security Assessment: GlobalTech Solutions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            backdrop-filter: blur(10px);
+            background-color: rgba(243, 244, 246, 0.8); /* bg-gray-100 with opacity */
+        }
+        .nav-link {
+            transition: color 0.3s ease, border-bottom-color 0.3s ease;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #0D9488; /* teal-600 */
+            border-bottom-color: #0D9488; /* teal-600 */
+        }
+        .section-title {
+            border-bottom: 2px solid #14B8A6; /* teal-500 */
+            padding-bottom: 0.5rem;
+        }
+        .tab-button.active {
+            background-color: #0D9488; /* teal-600 */
+            color: white;
+        }
+        .accordion-button.active {
+            background-color: #CCFBF1; /* teal-100 */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 700px; /* Adjusted for better fit */
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .table th, .table td {
+            border: 1px solid #E5E7EB; /* gray-200 */
+            padding: 0.75rem;
+            text-align: left;
+        }
+        .table th {
+            background-color: #F3F4F6; /* gray-100 */
+        }
+        .filter-select {
+            border: 1px solid #D1D5DB; /* gray-300 */
+            padding: 0.5rem;
+            border-radius: 0.375rem; /* rounded-md */
+        }
+    </style>
+</head>
+<body class="bg-stone-100 text-gray-800">
+
+    <header id="header" class="sticky-header shadow-md">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <h1 class="text-xl sm:text-2xl font-bold text-teal-700">GlobalTech Security Assessment</h1>
+                <nav class="hidden md:flex space-x-4">
+                    <a href="#welcome" class="nav-link py-2 px-3 border-b-2 border-transparent">Welcome</a>
+                    <a href="#current-state" class="nav-link py-2 px-3 border-b-2 border-transparent">Current State</a>
+                    <a href="#zero-trust" class="nav-link py-2 px-3 border-b-2 border-transparent">Zero Trust</a>
+                    <a href="#vulnerabilities" class="nav-link py-2 px-3 border-b-2 border-transparent">Vulnerabilities</a>
+                    <a href="#solutions" class="nav-link py-2 px-3 border-b-2 border-transparent">Solutions</a>
+                    <a href="#takeaways" class="nav-link py-2 px-3 border-b-2 border-transparent">Takeaways</a>
+                </nav>
+                <button id="mobile-menu-button" class="md:hidden text-gray-600 hover:text-teal-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+        </div>
+        <div id="mobile-menu" class="md:hidden hidden bg-gray-100 shadow-lg">
+            <a href="#welcome" class="block py-2 px-4 text-sm hover:bg-teal-50 nav-link-mobile">Welcome</a>
+            <a href="#current-state" class="block py-2 px-4 text-sm hover:bg-teal-50 nav-link-mobile">Current State</a>
+            <a href="#zero-trust" class="block py-2 px-4 text-sm hover:bg-teal-50 nav-link-mobile">Zero Trust</a>
+            <a href="#vulnerabilities" class="block py-2 px-4 text-sm hover:bg-teal-50 nav-link-mobile">Vulnerabilities</a>
+            <a href="#solutions" class="block py-2 px-4 text-sm hover:bg-teal-50 nav-link-mobile">Solutions</a>
+            <a href="#takeaways" class="block py-2 px-4 text-sm hover:bg-teal-50 nav-link-mobile">Takeaways</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+
+        <section id="welcome" class="mb-12 pt-16 -mt-16">
+            <h2 class="text-3xl font-semibold mb-6 section-title text-gray-700">Welcome to the Interactive Security Assessment</h2>
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <p class="mb-4 text-lg">This interactive application provides an exploration of the L400 Azure Enterprise Security Assessment for <strong>GlobalTech Solutions</strong>. It's designed to help infrastructure architects understand the security challenges in a hybrid cloud transformation and the recommended Azure controls based on Zero Trust principles.</p>
+                <p class="mb-2"><strong>GlobalTech Solutions</strong> is a rapidly expanding multinational enterprise with legacy on-premises infrastructure. They are aggressively pursuing digital transformation using Microsoft Azure and Power Platform to:</p>
+                <ul class="list-disc list-inside ml-4 mb-4 space-y-1 text-gray-700">
+                    <li>Accelerate cloud adoption.</li>
+                    <li>Improve operational efficiency through automation.</li>
+                    <li>Enable secure remote work.</li>
+                    <li>Ensure stringent data privacy and compliance.</li>
+                </ul>
+                <p>Navigate through the sections to explore GlobalTech's current state, key vulnerabilities, and the proposed path to a more secure and resilient hybrid environment.</p>
+            </div>
+        </section>
+
+        <section id="current-state" class="mb-12 pt-16 -mt-16">
+            <h2 class="text-3xl font-semibold mb-6 section-title text-gray-700">Current State & Architecture Challenges</h2>
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <p class="mb-4 text-lg">GlobalTech Solutions operates a typical hybrid environment, bridging a traditional datacenter with an initial Azure footprint. This section highlights the key components of their current architecture and the inherent challenges driving the need for enhanced security.</p>
+                
+                <h3 class="text-xl font-semibold mt-6 mb-3 text-teal-700">Key Architectural Components & Problematic Connections:</h3>
+                <div class="space-y-3 text-gray-700">
+                    <div class="p-3 bg-rose-50 border border-rose-200 rounded-md">
+                        <span class="font-medium text-rose-700">On-Premises Network:</span> Houses critical SQL Server databases and legacy applications. Connectivity to Azure via Site-to-Site VPN.
+                        <ul class="list-disc list-inside ml-4 mt-1 text-sm">
+                            <li>On-premises Data Gateway (using Azure Relay) for Power Platform access to local SQL. <span class="font-semibold text-red-600">(Potential Weak Link, Management Overhead)</span></li>
+                        </ul>
+                    </div>
+                    <div class="p-3 bg-amber-50 border border-amber-200 rounded-md">
+                        <span class="font-medium text-amber-700">Azure Hub VNet:</span> Central connectivity point with VPN Gateway and basic NSG filtering.
+                    </div>
+                    <div class="p-3 bg-sky-50 border border-sky-200 rounded-md">
+                        <span class="font-medium text-sky-700">Azure Spoke VNets:</span> Host Azure PaaS (SQL DB, Storage) and IaaS VMs.
+                        <ul class="list-disc list-inside ml-4 mt-1 text-sm">
+                            <li>Azure PaaS services (SQL DB, Storage) accessed via <span class="font-semibold text-red-600">public endpoints</span> by Power Platform. <span class="font-semibold text-red-600">(Increased Attack Surface)</span></li>
+                        </ul>
+                    </div>
+                     <div class="p-3 bg-indigo-50 border border-indigo-200 rounded-md">
+                        <span class="font-medium text-indigo-700">Power Platform:</span> Increasing adoption for apps and automation.
+                        <ul class="list-disc list-inside ml-4 mt-1 text-sm">
+                            <li>Direct public access to Azure PaaS. <span class="font-semibold text-red-600">(Data Exposure Risk)</span></li>
+                            <li>Reliance on On-premises Data Gateway for on-prem data. <span class="font-semibold text-red-600">(Security & Scalability Concerns)</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3 class="text-xl font-semibold mt-8 mb-3 text-teal-700">Key Challenges Driving Urgency:</h3>
+                <ul class="list-disc list-inside space-y-2 text-gray-700">
+                    <li><strong>Lack of Centralized Control:</strong> Disjointed security policies between on-premises and cloud.</li>
+                    <li><strong>Public Exposure:</strong> Reliance on public endpoints for some Azure services.</li>
+                    <li><strong>Limited Visibility:</strong> Insufficient logging and monitoring across the hybrid environment.</li>
+                    <li><strong>Power Platform Security Gaps:</strong> Concerns with secure integration to sensitive data.</li>
+                    <li><strong>Compliance Pressure:</strong> Increasing regulatory requirements for data residency and access control.</li>
+                </ul>
+                <p class="mt-4 italic text-sm text-gray-600">The current architecture, while functional, exhibits "implicit trust" pathways and technical debt, increasing vulnerability as GlobalTech scales its cloud adoption.</p>
+            </div>
+        </section>
+
+        <section id="zero-trust" class="mb-12 pt-16 -mt-16">
+            <h2 class="text-3xl font-semibold mb-6 section-title text-gray-700">Understanding Zero Trust</h2>
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <p class="mb-6 text-lg">A Zero Trust security model is fundamental to securing modern hybrid environments like GlobalTech's. It operates on the principle of "never trust, always verify," requiring strict verification for every user and device before granting access to resources. This section explains the core principles.</p>
+                <div id="zeroTrustTabs">
+                    <div class="mb-4 border-b border-gray-200">
+                        <nav class="-mb-px flex space-x-4" aria-label="Tabs">
+                            <button data-tab="verify" class="tab-button whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-teal-600 hover:border-teal-300 active">Verify Explicitly</button>
+                            <button data-tab="least-privilege" class="tab-button whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-teal-600 hover:border-teal-300">Use Least Privilege</button>
+                            <button data-tab="assume-breach" class="tab-button whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-teal-600 hover:border-teal-300">Assume Breach</button>
+                        </nav>
+                    </div>
+                    <div id="verifyContent" class="tab-content p-2">
+                        <h3 class="text-xl font-semibold mb-2 text-teal-700">Verify Explicitly</h3>
+                        <p class="text-gray-700">Always authenticate and authorize based on all available data points, including user identity, location, device health, service or workload, data classification, and anomalies. This applies regardless of whether the access request originates from inside or outside the traditional network perimeter.</p>
+                    </div>
+                    <div id="leastPrivilegeContent" class="tab-content p-2 hidden">
+                        <h3 class="text-xl font-semibold mb-2 text-teal-700">Use Least Privilege Access</h3>
+                        <p class="text-gray-700">Limit user access with Just-In-Time and Just-Enough-Access (JIT/JEA), risk-based adaptive policies, and data protection to protect both data and productivity. Grant only the minimum permissions required for users and systems to perform their tasks, reducing the potential impact of a compromised account or system.</p>
+                    </div>
+                    <div id="assumeBreachContent" class="tab-content p-2 hidden">
+                        <h3 class="text-xl font-semibold mb-2 text-teal-700">Assume Breach</h3>
+                        <p class="text-gray-700">Minimize blast radius and segment access. Verify end-to-end encryption and use analytics to get visibility, drive threat detection, and improve defenses. Design security controls with the expectation that a compromise might occur, focusing on rapid detection, response, and containment to limit lateral movement.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="vulnerabilities" class="mb-12 pt-16 -mt-16">
+            <h2 class="text-3xl font-semibold mb-6 section-title text-gray-700">Vulnerability Deep Dive</h2>
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <p class="mb-4 text-lg">GlobalTech Solutions faces critical security challenges across multiple Azure Well-Architected Framework pillars. This section allows you to explore these vulnerabilities in detail.</p>
+                
+                <div class="my-6">
+                     <h3 class="text-xl font-semibold mb-3 text-center text-teal-700">Distribution of Identified Security Challenges by WAF Pillar</h3>
+                    <div class="chart-container bg-gray-50 p-4 rounded-lg shadow">
+                        <canvas id="challengesChart"></canvas>
+                    </div>
+                </div>
+
+                <div id="vulnerabilitiesAccordion" class="space-y-2">
+                    </div>
+            </div>
+        </section>
+
+        <section id="solutions" class="mb-12 pt-16 -mt-16">
+            <h2 class="text-3xl font-semibold mb-6 section-title text-gray-700">Recommended Azure Security Controls</h2>
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                 <p class="mb-6 text-lg">To address the identified vulnerabilities and align with Zero Trust principles, specific Azure security controls are recommended. Explore the solutions below, which can be filtered by service category or Zero Trust principle.</p>
+                
+                <div class="flex flex-wrap gap-4 mb-6">
+                    <div>
+                        <label for="filterCategory" class="block text-sm font-medium text-gray-700">Filter by Category:</label>
+                        <select id="filterCategory" class="filter-select mt-1 block w-full sm:w-auto">
+                            <option value="all">All Categories</option>
+                            <option value="Identity & Access Management">Identity & Access Management</option>
+                            <option value="Network Security">Network Security</option>
+                            <option value="Data Protection">Data Protection</option>
+                            <option value="Application & Platform Security">Application & Platform Security</option>
+                            <option value="Logging, Monitoring & Threat Detection">Logging, Monitoring & Threat Detection</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="filterPrinciple" class="block text-sm font-medium text-gray-700">Filter by Zero Trust Principle:</label>
+                        <select id="filterPrinciple" class="filter-select mt-1 block w-full sm:w-auto">
+                            <option value="all">All Principles</option>
+                            <option value="Verify Explicitly">Verify Explicitly</option>
+                            <option value="Use Least Privilege Access">Use Least Privilege Access</option>
+                            <option value="Assume Breach">Assume Breach</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table id="solutionsTable" class="min-w-full table">
+                        <thead>
+                            <tr>
+                                <th class="w-1/4">Service Name</th>
+                                <th class="w-1/3">Key Feature</th>
+                                <th class="w-1/3">Configuration Highlight</th>
+                                <th class="w-1/6">Zero Trust Principle</th>
+                                <th class="hidden">Category</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="takeaways" class="mb-12 pt-16 -mt-16">
+            <h2 class="text-3xl font-semibold mb-6 section-title text-gray-700">Key Takeaways for Architects</h2>
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <p class="mb-4 text-lg">The security assessment for GlobalTech Solutions highlights critical actions for infrastructure architects to build a resilient and secure hybrid cloud environment.</p>
+                <ul class="list-disc list-inside space-y-3 text-gray-700">
+                    <li><strong>Embrace Zero Trust as a Guiding Philosophy:</strong> Consistently apply "Verify Explicitly," "Use Least Privilege Access," and "Assume Breach" in all design and operational decisions.</li>
+                    <li><strong>Architect for Private Connectivity First:</strong> Prioritize Azure Private Link and Power Platform VNet integration to minimize public exposure. Correct DNS configuration for private endpoints is crucial.</li>
+                    <li><strong>Invest in Advanced Network Security:</strong> Leverage Azure Firewall Premium with TLS inspection and IDPS as a central control point for all traffic.</li>
+                    <li><strong>Implement Comprehensive Identity Protection:</strong> Utilize Microsoft Entra ID Protection, Conditional Access, and PIM to secure and manage all identities.</li>
+                    <li><strong>Establish Unified Monitoring and Automation:</strong> Centralize logging in Microsoft Sentinel and Azure Monitor for real-time threat detection and automated response.</li>
+                    <li><strong>Consider WAF Pillars Holistically:</strong> Balance security with performance, reliability, cost, and operational excellence for sustainable solutions.</li>
+                </ul>
+                <p class="mt-6 italic">By systematically addressing these areas, GlobalTech Solutions can transform its hybrid cloud environment into a secure, compliant, and resilient foundation for its digital future.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-gray-300 text-center p-6 mt-12">
+        <p>&copy; 2025 Interactive Security Assessment. Based on the L400 Azure Enterprise Security Assessment Report.</p>
+    </footer>
+
+<script>
+    const vulnerabilityData = [
+        {
+            category: "Identity & Access Management (IAM) Vulnerabilities",
+            challenges: [
+                { name: "Inconsistent authentication and authorization mechanisms across on-premises and Azure.", impact: "High risk of identity compromise, unauthorized access, and lateral movement. Complex, error-prone manual processes. Unpredictable application behavior." },
+                { name: "Reliance on legacy authentication methods for some on-premises applications.", impact: "Increased vulnerability to common attacks (e.g., password spray). Requires manual workarounds." }
+            ]
+        },
+        {
+            category: "Network Security & Connectivity Gaps",
+            challenges: [
+                { name: "Insecure or sub-optimal connectivity between on-premises and Azure, leading to data exposure over the public internet.", impact: "Increased attack surface, risk of data exfiltration and man-in-the-middle attacks. Higher latency and data transfer costs." },
+                { name: "Lack of granular network segmentation within Azure VNets.", impact: "Allows potential lateral movement of threats. Complex to manage security at scale." },
+                { name: "Inadequate outbound traffic control from Power Platform and other Azure services.", impact: "Risk of data exfiltration. Difficulty in meeting regulatory requirements." },
+                { name: "DNS misconfiguration leading to public IP resolution for private endpoints.", impact: "Bypasses private links, exposing data/services. Introduces unnecessary latency." }
+            ]
+        },
+        {
+            category: "Data Protection & Compliance Risks",
+            challenges: [
+                { name: "Sensitive data at rest and in transit not consistently encrypted.", impact: "High risk of data breaches and unauthorized data access. Potential for data corruption or loss." },
+                { name: "Difficulty in demonstrating compliance with data residency and privacy regulations.", impact: "Significant fines and reputational damage. Potential for data exposure. Increased audit costs." }
+            ]
+        },
+        {
+            category: "Application & Platform Security Deficiencies",
+            challenges: [
+                { name: "Power Platform applications connecting to sensitive data sources via public endpoints or less secure mechanisms.", impact: "Exposure of backend services and data. Inconsistent security policies and slow development. Increased latency." },
+                { name: "Lack of centralized API management for custom connectors and on-premises APIs.", impact: "Inconsistent policies, difficult troubleshooting, slower development. Potential for insecure API exposure." }
+            ]
+        },
+        {
+            category: "Operational Security & Monitoring Blind Spots",
+            challenges: [
+                { name: "Fragmented logging and monitoring solutions across on-premises and Azure.", impact: "Delayed detection and response to security incidents. High operational overhead for security teams. Excessive storage costs." },
+                { name: "Lack of real-time threat detection and automated incident response.", impact: "Increased \"dwell time\" for attackers. Inefficient incident response." }
+            ]
+        }
+    ];
+
+    const solutionsData = [
+        { service: "Microsoft Entra ID Protection", feature: "Real-time risk detection & remediation", config: "Enable user/sign-in risk policies (e.g., block high-risk, require MFA for medium-risk). Integrate with Microsoft Sentinel.", principle: "Verify Explicitly", category: "Identity & Access Management" },
+        { service: "Microsoft Entra Conditional Access", feature: "Granular access control based on conditions", config: "Enforce MFA for all users, require compliant devices, block legacy authentication, apply location-based policies. Use \"report-only\" mode for new policies.", principle: "Verify Explicitly", category: "Identity & Access Management" },
+        { service: "Microsoft Entra Privileged Identity Management (PIM)", feature: "Just-In-Time (JIT) privileged access", config: "Configure eligible assignments for administrative roles with time limits and approval workflows. Require MFA for role activation.", principle: "Use Least Privilege Access", category: "Identity & Access Management" },
+        { service: "Microsoft Entra RBAC", feature: "Fine-grained authorization", config: "Assign minimum necessary permissions to users, groups, and service principals. Regularly review and audit assignments.", principle: "Use Least Privilege Access", category: "Identity & Access Management" },
+        { service: "Azure Firewall Premium", feature: "Centralized network traffic inspection", config: "Deploy in hub VNet. Enable TLS inspection for outbound/East-West HTTPS traffic. Enable IDPS in \"Alert and Deny\" mode. Configure application and network rules for microsegmentation.", principle: "Assume Breach, Verify Explicitly", category: "Network Security" },
+        { service: "Azure Private Link", feature: "Private connectivity to PaaS services", config: "Create Private Endpoints for Azure SQL DB, Storage, Key Vault, etc. Disable public network access on linked PaaS resources.", principle: "Assume Breach", category: "Network Security" },
+        { service: "Power Platform VNet Integration", feature: "Secure outbound connectivity for Power Platform", config: "Delegate a dedicated subnet in Azure VNet to Power Platform environments. Use for connectors to Azure PaaS and on-premises resources.", principle: "Assume Breach, Use Least Privilege Access", category: "Network Security" },
+        { service: "Azure VPN Gateway / ExpressRoute", feature: "Hybrid connectivity to on-premises", config: "Configure Site-to-Site VPN or ExpressRoute private peering for secure tunnel. Ensure redundancy for high availability.", principle: "Assume Breach, Verify Explicitly", category: "Network Security" },
+        { service: "Azure Private DNS Zones & Private Resolver", feature: "Hybrid DNS resolution for private endpoints", config: "Create private DNS zones for Private Link services. Configure on-premises DNS servers with conditional forwarders to Azure DNS Private Resolver.", principle: "Assume Breach", category: "Network Security" },
+        { service: "Network Security Groups (NSGs)", feature: "Layer 4 traffic filtering", config: "Apply NSGs to subnets and NICs for granular control. Use Application Security Groups (ASGs) to simplify rule management.", principle: "Assume Breach, Use Least Privilege Access", category: "Network Security" },
+        { service: "Azure Key Vault", feature: "Secure storage of secrets & keys", config: "Store all application secrets, API keys, and encryption keys. Implement strict access policies (RBAC) and regularly rotate keys.", principle: "Use Least Privilege Access", category: "Data Protection" },
+        { service: "Azure Storage Encryption", feature: "Encryption for data at rest", config: "Enable encryption for all Storage Accounts. Use customer-managed keys (CMK) from Key Vault for enhanced control.", principle: "Assume Breach", category: "Data Protection" },
+        { service: "Azure SQL Database Encryption", feature: "Encryption for data at rest", config: "Enable Transparent Data Encryption (TDE). Use Azure Key Vault integration for TDE protectors.", principle: "Assume Breach", category: "Data Protection" },
+        { service: "Azure Information Protection / Microsoft Purview", feature: "Data classification, labeling, DLP", config: "Classify sensitive data, apply labels. Implement DLP policies to prevent unauthorized sharing or exfiltration.", principle: "Assume Breach, Use Least Privilege Access", category: "Data Protection" },
+        { service: "Azure API Management (APIM)", feature: "Centralized API gateway & management", config: "Deploy APIM (Premium for VNet integration). Use self-hosted gateway for on-prem APIs. Enforce authN/authZ, rate limiting.", principle: "Verify Explicitly, Use Least Privilege Access", category: "Application & Platform Security" },
+        { service: "Power Platform Custom Connectors", feature: "Integration with custom APIs", config: "Publish APIs via APIM as custom connectors. Ensure VNet integration and private endpoints where possible.", principle: "Verify Explicitly, Use Least Privilege Access", category: "Application & Platform Security" },
+        { service: "Azure Web Application Firewall (WAF)", feature: "Application-layer protection", config: "Deploy WAF (on App Gateway or Front Door) to protect web apps/APIs from common attacks (SQLi, XSS).", principle: "Assume Breach", category: "Application & Platform Security" },
+        { service: "Microsoft Sentinel", feature: "Cloud-native SIEM & SOAR", config: "Ingest logs from Azure, M365, on-prem. Configure analytics rules for threat detection and automated playbooks for response.", principle: "Assume Breach", category: "Logging, Monitoring & Threat Detection" },
+        { service: "Azure Monitor & Log Analytics", feature: "Centralized logging & analytics", config: "Configure diagnostic settings for all Azure resources to send logs to Log Analytics. Use for querying, alerting, storage.", principle: "Assume Breach", category: "Logging, Monitoring & Threat Detection" },
+        { service: "Microsoft Defender for Cloud", feature: "CSPM & CWPP", config: "Enable across subscriptions. Use secure score to remediate misconfigurations. Integrate alerts with Sentinel.", principle: "Assume Breach", category: "Logging, Monitoring & Threat Detection" },
+        { service: "Azure DDoS Protection Standard", feature: "Protects against DDoS attacks", config: "Enable for all public-facing applications. Provides real-time attack mitigation and telemetry.", principle: "Assume Breach", category: "Logging, Monitoring & Threat Detection" }
+    ];
+
+    document.addEventListener('DOMContentLoaded', function () {
+        
+        // Smooth scrolling for nav links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                    // Close mobile menu if open
+                    if(targetId !== '#header') { // don't close for header itself
+                        document.getElementById('mobile-menu').classList.add('hidden');
+                    }
+                }
+            });
+        });
+        
+        // Mobile menu toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (mobileMenuButton && mobileMenu) {
+            mobileMenuButton.addEventListener('click', function() {
+                mobileMenu.classList.toggle('hidden');
+            });
+        }
+        document.querySelectorAll('.nav-link-mobile').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+            });
+        });
+
+
+        // Active nav link highlighting on scroll
+        const sections = document.querySelectorAll('section');
+        const navLinks = document.querySelectorAll('header nav a');
+        
+        window.onscroll = () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (pageYOffset >= sectionTop - 70) { // 70 to offset sticky header height
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href').substring(1) === current) {
+                    link.classList.add('active');
+                }
+            });
+        };
+
+
+        // Zero Trust Tabs
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabId = button.dataset.tab;
+
+                tabButtons.forEach(btn => btn.classList.remove('active', 'text-teal-600', 'border-teal-500'));
+                button.classList.add('active', 'text-teal-600', 'border-teal-500');
+                
+                tabContents.forEach(content => {
+                    if (content.id === `${tabId}Content`) {
+                        content.classList.remove('hidden');
+                    } else {
+                        content.classList.add('hidden');
+                    }
+                });
+            });
+        });
+
+
+        // Vulnerabilities Accordion
+        const accordionContainer = document.getElementById('vulnerabilitiesAccordion');
+        if (accordionContainer) {
+            vulnerabilityData.forEach((item, index) => {
+                const accordionItem = document.createElement('div');
+                accordionItem.classList.add('border', 'border-gray-200', 'rounded-md');
+
+                const button = document.createElement('button');
+                button.classList.add('accordion-button', 'w-full', 'p-4', 'text-left', 'font-medium', 'text-gray-700', 'hover:bg-teal-50', 'focus:outline-none', 'transition', 'duration-150', 'ease-in-out', 'flex', 'justify-between', 'items-center');
+                button.innerHTML = `
+                    <span>${item.category}</span>
+                    <svg class="w-5 h-5 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                `;
+                
+                const content = document.createElement('div');
+                content.classList.add('accordion-content', 'p-4', 'border-t', 'border-gray-200', 'hidden');
+                
+                const challengesList = document.createElement('ul');
+                challengesList.classList.add('list-disc', 'list-inside', 'space-y-2');
+                item.challenges.forEach(challenge => {
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `<strong>${challenge.name}</strong><p class="text-sm text-gray-600 ml-4 italic">${challenge.impact}</p>`;
+                    challengesList.appendChild(listItem);
+                });
+                content.appendChild(challengesList);
+
+                button.addEventListener('click', () => {
+                    const isActive = button.classList.toggle('active');
+                    content.classList.toggle('hidden', !isActive);
+                    button.querySelector('svg').classList.toggle('rotate-180', isActive);
+                });
+
+                accordionItem.appendChild(button);
+                accordionItem.appendChild(content);
+                accordionContainer.appendChild(accordionItem);
+            });
+        }
+
+        // Challenges Chart
+        const chartCtx = document.getElementById('challengesChart')?.getContext('2d');
+        if (chartCtx) {
+            const chartData = {
+                labels: ["IAM", "Network", "Data", "AppSec", "OpsSec"],
+                datasets: [{
+                    label: 'Number of Key Challenges',
+                    data: [2, 4, 2, 2, 2], // Based on Problem Statement Matrix
+                    backgroundColor: [
+                        'rgba(20, 184, 166, 0.6)', // teal-500
+                        'rgba(13, 148, 136, 0.6)', // teal-600
+                        'rgba(15, 118, 110, 0.6)', // teal-700
+                        'rgba(17, 94, 89, 0.6)',   // teal-800
+                        'rgba(19, 78, 74, 0.6)'    // teal-900
+                    ],
+                    borderColor: [
+                        'rgba(20, 184, 166, 1)',
+                        'rgba(13, 148, 136, 1)',
+                        'rgba(15, 118, 110, 1)',
+                        'rgba(17, 94, 89, 1)',
+                        'rgba(19, 78, 74, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            };
+            new Chart(chartCtx, {
+                type: 'bar',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y;
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeInOutQuart'
+                    }
+                }
+            });
+        }
+
+        // Solutions Table and Filtering
+        const solutionsTableBody = document.querySelector('#solutionsTable tbody');
+        const filterCategorySelect = document.getElementById('filterCategory');
+        const filterPrincipleSelect = document.getElementById('filterPrinciple');
+
+        function populateSolutionsTable(filteredSolutions) {
+            if (!solutionsTableBody) return;
+            solutionsTableBody.innerHTML = ''; // Clear existing rows
+            filteredSolutions.forEach(sol => {
+                const row = solutionsTableBody.insertRow();
+                row.insertCell().textContent = sol.service;
+                row.insertCell().textContent = sol.feature;
+                row.insertCell().textContent = sol.config;
+                row.insertCell().textContent = sol.principle;
+                const categoryCell = row.insertCell(); // Hidden category cell
+                categoryCell.textContent = sol.category;
+                categoryCell.classList.add('hidden');
+            });
+        }
+
+        function filterSolutions() {
+            const selectedCategory = filterCategorySelect.value;
+            const selectedPrinciple = filterPrincipleSelect.value;
+
+            const filtered = solutionsData.filter(solution => {
+                const categoryMatch = selectedCategory === 'all' || solution.category === selectedCategory;
+                const principleMatch = selectedPrinciple === 'all' || solution.principle.includes(selectedPrinciple);
+                return categoryMatch && principleMatch;
+            });
+            populateSolutionsTable(filtered);
+        }
+
+        if (filterCategorySelect && filterPrincipleSelect) {
+            filterCategorySelect.addEventListener('change', filterSolutions);
+            filterPrincipleSelect.addEventListener('change', filterSolutions);
+        }
+        
+        // Initial population of solutions table
+        populateSolutionsTable(solutionsData);
+
+    });
+</script>
+</body>
+</html>
